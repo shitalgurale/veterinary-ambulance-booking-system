@@ -1,6 +1,6 @@
 # Veterinary Ambulance Booking System
 
-A full-stack web application for managing veterinary ambulance services, pet owners, pets, veterinarians, and appointments.
+Full Stack Veterinary Ambulance Booking System built using Django, Django REST Framework, React.js, Vite, JavaScript, MySQL, HTML, and CSS.
 
 ## 🚀 Tech Stack
 
