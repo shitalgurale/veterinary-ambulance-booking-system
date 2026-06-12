@@ -19,8 +19,7 @@ Full Stack Veterinary Ambulance Booking System built using Django, Django REST F
 
 ### Database
 
-* MySQL
-
+* Sqlite
 ---
 
 ## 📋 Features
@@ -62,31 +61,41 @@ Full Stack Veterinary Ambulance Booking System built using Django, Django REST F
 
 ## 📁 Project Structure
 
-```text
-Veterinary Ambulance Booking System
-│
+Project Structure
+.
 ├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
-│   └── ...
-│
+│   └── veterinary_Ambulance/
+│       ├── manage.py
+│       └── veterinary_ambulance/
 ├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── ...
-│
+│   └── veterinary_ambulance/
+│       ├── src/
+│       └── package.json
 └── README.md
-```
+Getting Started
+Backend
+cd backend/veterinary_Ambulance
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 
----
+The backend will be available at:
 
-## ⚙️ Backend Setup
+http://127.0.0.1:8000/
+Frontend
+cd frontend/veterinary_ambulance
+npm install
+npm run dev
 
-Navigate to backend directory:
+The frontend will be available at:
 
-```bash
-cd backend
-```
+http://localhost:5173/
+API Endpoints
+/api/
+/api/owners/
+/api/pets/
+/api/vets/
+/api/appointments/
 
 Create virtual environment:
 
@@ -96,28 +105,6 @@ python -m venv venv
 
 Activate virtual environment:
 
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run migrations:
-
-```bash
-python manage.py migrate
-```
-
-Start Django server:
-
-```bash
-python manage.py runserver
 ```
 
 Backend URL:
