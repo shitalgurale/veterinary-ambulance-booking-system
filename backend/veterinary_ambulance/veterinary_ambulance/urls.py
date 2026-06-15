@@ -9,7 +9,7 @@ def home(request):
 
     <h2>Available Endpoints</h2>
 
-    <p><a href="/admin/">Admin Panel</a></p>
+    
     <p><a href="/api/owners/">Owners</a></p>
     <p><a href="/api/pets/">Pets</a></p>
     <p><a href="/api/vets/">Vets</a></p>
