@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-va7u-u&c6v&rc8===*1f$00!r14!(#7(f+9)8k-qafj+cp(zje
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "veterinary-ambulance-booking-system.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
