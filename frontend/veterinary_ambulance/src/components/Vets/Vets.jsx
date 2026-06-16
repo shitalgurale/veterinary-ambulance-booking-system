@@ -3,32 +3,54 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import VetModal from "./VetModal";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Vets = () => {
+
     const [vets, setVets] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedVet, setSelectedVet] = useState({});
 
+    // -----------------------------
+    // FETCH VETS
+    // -----------------------------
     const fetchVets = async () => {
-        const res = await fetch("http://127.0.0.1:8000/api/vets/");
-        const data = await res.json();
-        setVets(data);
+        try {
+            const res = await fetch(`${API_URL}/vets/`);
+            const data = await res.json();
+            setVets(data);
+        } catch (error) {
+            console.error("Error fetching vets:", error);
+        }
     };
 
     useEffect(() => {
         fetchVets();
     }, []);
 
+    // -----------------------------
+    // DELETE VET
+    // -----------------------------
     const handleDelete = async (id) => {
-        await fetch(`http://127.0.0.1:8000/api/vets/${id}/`, {
-            method: "DELETE",
-        });
-        fetchVets();
+        try {
+            await fetch(`${API_URL}/vets/${id}/`, {
+                method: "DELETE",
+            });
+
+            fetchVets();
+        } catch (error) {
+            console.error("Delete error:", error);
+        }
     };
 
+    // -----------------------------
+    // TABLE COLUMNS
+    // -----------------------------
     const columns = [
         { field: "id", headerName: "ID", width: 70 },
         { field: "name", headerName: "Name", width: 150 },
         { field: "specialization", headerName: "Specialization", width: 200 },
+
         {
             field: "actions",
             headerName: "Actions",
@@ -58,6 +80,9 @@ const Vets = () => {
         },
     ];
 
+    // -----------------------------
+    // CREATE VET
+    // -----------------------------
     const createVet = () => {
         setSelectedVet({});
         setModalOpen(true);
@@ -71,10 +96,18 @@ const Vets = () => {
                 Add Vet
             </Button>
 
-            <div style={{ height: 400 }}>
-                <DataGrid rows={vets} columns={columns} />
+            {/* DATA GRID WRAPPER */}
+            <div style={{ height: 400, width: "100%" }}>
+                <DataGrid
+                    rows={vets}
+                    columns={columns}
+                    getRowId={(row) => row.id}
+                    pageSize={5}
+                    rowsPerPageOptions={[5]}
+                />
             </div>
 
+            {/* MODAL */}
             <VetModal
                 modalOpen={modalOpen}
                 setModalOpen={setModalOpen}

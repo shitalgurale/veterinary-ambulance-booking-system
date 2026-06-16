@@ -1,9 +1,24 @@
-import { Modal, Box, Typography, TextField, Button, MenuItem } from "@mui/material";
+import {
+    Modal,
+    Box,
+    Typography,
+    TextField,
+    Button,
+    MenuItem
+} from "@mui/material";
+
 import { useEffect, useState } from "react";
 
-const PetModal = ({ modalOpen, setModalOpen, selectedPet, refreshPets }) => {
+const API_URL = import.meta.env.VITE_API_URL;
 
-    const isCreate = !selectedPet?.id;
+const PetModal = ({
+    modalOpen,
+    setModalOpen,
+    selectedPet,
+    refreshPets
+}) => {
+
+    const isEdit = Boolean(selectedPet?.id);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -14,108 +29,160 @@ const PetModal = ({ modalOpen, setModalOpen, selectedPet, refreshPets }) => {
 
     const [owners, setOwners] = useState([]);
 
+    // -----------------------------
+    // LOAD FORM ON EDIT
+    // -----------------------------
     useEffect(() => {
-        setFormData({
-            name: selectedPet?.name || "",
-            species: selectedPet?.species || "",
-            age: selectedPet?.age || "",
-            owner: selectedPet?.owner || ""
-        });
+        if (selectedPet) {
+            setFormData({
+                name: selectedPet?.name || "",
+                species: selectedPet?.species || "",
+                age: selectedPet?.age || "",
+                owner: selectedPet?.owner?.id || selectedPet?.owner || ""
+            });
+        } else {
+            setFormData({
+                name: "",
+                species: "",
+                age: "",
+                owner: ""
+            });
+        }
     }, [selectedPet]);
 
-    // ✅ fetch owners for dropdown
+    // -----------------------------
+    // FETCH OWNERS
+    // -----------------------------
     useEffect(() => {
         const fetchOwners = async () => {
-            const res = await fetch("http://127.0.0.1:8000/api/owners/");
-            const data = await res.json();
-            setOwners(data);
+            try {
+                const res = await fetch(`${API_URL}/owners/`);
+                const data = await res.json();
+                setOwners(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Error fetching owners:", error);
+            }
         };
+
         fetchOwners();
     }, []);
 
+    // -----------------------------
+    // SUBMIT
+    // -----------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const url = isCreate
-            ? "http://127.0.0.1:8000/api/pets/"
-            : `http://127.0.0.1:8000/api/pets/${selectedPet.id}/`;
+        const url = isEdit
+            ? `${API_URL}/pets/${selectedPet.id}/`
+            : `${API_URL}/pets/`;
 
-        const method = isCreate ? "POST" : "PUT";
+        const method = isEdit ? "PUT" : "POST";
 
-        await fetch(url, {
-            method,
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                ...formData,
-                age: Number(formData.age) // ensure number
-            })
-        });
+        const payload = {
+            name: formData.name,
+            species: formData.species,
+            age: Number(formData.age),
+            owner: Number(formData.owner)
+        };
 
-        await refreshPets();
-        setModalOpen(false);
-    };
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
 
-    const style = {
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        bgcolor: "white",
-        width: 300,
-        transform: "translate(-50%, -50%)",
-        p: 3,
-        borderRadius: 1
+            if (!res.ok) {
+                throw new Error("Failed to save pet");
+            }
+
+            await refreshPets();
+            setModalOpen(false);
+
+        } catch (error) {
+            console.error("Error saving pet:", error);
+        }
     };
 
     return (
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-            <Box sx={style}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                    {isCreate ? "Add Pet" : "Edit Pet"}
+            <Box sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                bgcolor: "white",
+                width: 320,
+                p: 3,
+                borderRadius: 2
+            }}>
+
+                <Typography variant="h6" mb={2}>
+                    {isEdit ? "Edit Pet" : "Add Pet"}
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
+
                     <TextField
                         label="Name"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        fullWidth sx={{ mb: 2 }} required
+                        onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                        }
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
                     />
 
                     <TextField
                         label="Species"
                         value={formData.species}
-                        onChange={(e) => setFormData({ ...formData, species: e.target.value })}
-                        fullWidth sx={{ mb: 2 }} required
+                        onChange={(e) =>
+                            setFormData({ ...formData, species: e.target.value })
+                        }
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
                     />
 
                     <TextField
                         label="Age"
                         type="number"
                         value={formData.age}
-                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                        fullWidth sx={{ mb: 2 }} required
+                        onChange={(e) =>
+                            setFormData({ ...formData, age: e.target.value })
+                        }
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
                     />
 
-                    {/* ✅ OWNER DROPDOWN */}
+                    {/* OWNER DROPDOWN */}
                     <TextField
                         select
                         label="Owner"
                         value={formData.owner}
-                        onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-                        fullWidth sx={{ mb: 2 }} required
+                        onChange={(e) =>
+                            setFormData({ ...formData, owner: e.target.value })
+                        }
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        required
                     >
-                        {owners.map(owner => (
-                            <MenuItem key={owner.id} value={owner.id}>
-                                {owner.name}
+                        {owners.map((o) => (
+                            <MenuItem key={o.id} value={o.id}>
+                                {o.name}
                             </MenuItem>
                         ))}
                     </TextField>
 
                     <Button type="submit" variant="contained" fullWidth>
-                        {isCreate ? "Create" : "Update"}
+                        {isEdit ? "Update" : "Create"}
                     </Button>
+
                 </form>
             </Box>
         </Modal>

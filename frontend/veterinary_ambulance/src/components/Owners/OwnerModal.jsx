@@ -1,7 +1,14 @@
-import { Modal, Box, Typography, TextField, Button } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { Modal, Box, Typography, TextField, Button } from "@mui/material";
+import { useState, useEffect } from "react";
 
-const OwnerModal = ({ modalOpen, setModalOpen, selectedOwner, refreshOwners }) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const OwnerModal = ({
+    modalOpen,
+    setModalOpen,
+    selectedOwner,
+    refreshOwners
+}) => {
 
     const isCreate = !selectedOwner?.id;
 
@@ -10,64 +17,101 @@ const OwnerModal = ({ modalOpen, setModalOpen, selectedOwner, refreshOwners }) =
         phone: ""
     });
 
+    const [loading, setLoading] = useState(false);
+
+    // -----------------------------
+    // Fill form when editing
+    // -----------------------------
     useEffect(() => {
-        setFormData({
-            name: selectedOwner?.name || "",
-            phone: selectedOwner?.phone || ""
-        });
+        if (selectedOwner?.id) {
+            setFormData({
+                name: selectedOwner?.name || "",
+                phone: selectedOwner?.phone || ""
+            });
+        }
     }, [selectedOwner]);
 
+    // -----------------------------
+    // Reset when opening create modal
+    // -----------------------------
+    useEffect(() => {
+        if (modalOpen && isCreate) {
+            setFormData({
+                name: "",
+                phone: ""
+            });
+        }
+    }, [modalOpen, isCreate]);
+
+    // -----------------------------
+    // Reset when closing modal
+    // -----------------------------
+    const handleClose = () => {
+        setModalOpen(false);
+        setFormData({ name: "", phone: "" });
+    };
+
+    // -----------------------------
+    // STYLE
+    // -----------------------------
     const style = {
         position: "absolute",
         top: "50%",
         left: "50%",
         bgcolor: "white",
-        width: 300,
+        width: 320,
         transform: "translate(-50%, -50%)",
         p: 3,
-        borderRadius: 1,
+        borderRadius: 2,
         boxShadow: 24
     };
 
+    // -----------------------------
+    // SUBMIT
+    // -----------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+
+        const url = isCreate
+            ? `${API_URL}/owners/`
+            : `${API_URL}/owners/${selectedOwner.id}/`;
+
+        const method = isCreate ? "POST" : "PUT";
+
+        const payload = {
+            name: formData.name.trim(),
+            phone: formData.phone.trim()
+        };
 
         try {
-            if (isCreate) {
-                // ✅ CREATE
-                await fetch("http://127.0.0.1:8000/api/owners/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(formData)
-                });
-            } else {
-                // ✅ UPDATE
-                await fetch(`http://127.0.0.1:8000/api/owners/${selectedOwner.id}/`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(formData)
-                });
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to save owner");
             }
 
-            // ✅ Refresh table after save
             await refreshOwners();
-
-            setModalOpen(false);
+            handleClose();
 
         } catch (error) {
             console.error("Error saving owner:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <Modal open={modalOpen} onClose={handleClose}>
             <Box sx={style}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                    {isCreate ? "Creating Owner" : "Updating Owner"}
+                    {isCreate ? "Create Owner" : "Update Owner"}
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
@@ -97,8 +141,13 @@ const OwnerModal = ({ modalOpen, setModalOpen, selectedOwner, refreshOwners }) =
                         type="submit"
                         variant="contained"
                         fullWidth
+                        disabled={loading}
                     >
-                        {isCreate ? "Create" : "Update"}
+                        {loading
+                            ? "Saving..."
+                            : isCreate
+                                ? "Create"
+                                : "Update"}
                     </Button>
                 </form>
             </Box>

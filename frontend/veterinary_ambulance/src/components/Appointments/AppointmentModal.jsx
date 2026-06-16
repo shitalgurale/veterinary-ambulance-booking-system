@@ -1,6 +1,8 @@
 import { Modal, Box, Typography, TextField, Button, MenuItem } from "@mui/material";
 import { useEffect, useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AppointmentModal = ({
     modalOpen,
     setModalOpen,
@@ -19,54 +21,79 @@ const AppointmentModal = ({
     const [pets, setPets] = useState([]);
     const [vets, setVets] = useState([]);
 
+    // ---------------------------
+    // Fill form when editing
+    // ---------------------------
     useEffect(() => {
-        setFormData({
-            date: selectedAppointment?.date || "",
-            pet: selectedAppointment?.pet || "",
-            vet: selectedAppointment?.vet || ""
-        });
+        if (selectedAppointment) {
+            setFormData({
+                date: selectedAppointment?.date || "",
+                pet: selectedAppointment?.pet?.id || selectedAppointment?.pet || "",
+                vet: selectedAppointment?.vet?.id || selectedAppointment?.vet || ""
+            });
+        }
     }, [selectedAppointment]);
 
-    // ✅ fetch pets + vets
+    // ---------------------------
+    // Fetch pets & vets
+    // ---------------------------
     useEffect(() => {
         const fetchData = async () => {
-            const petRes = await fetch("http://127.0.0.1:8000/api/pets/");
-            const vetRes = await fetch("http://127.0.0.1:8000/api/vets/");
+            try {
+                const petRes = await fetch(`${API_URL}/pets/`);
+                const vetRes = await fetch(`${API_URL}/vets/`);
 
-            const petsData = await petRes.json();
-            const vetsData = await vetRes.json();
+                const petsData = await petRes.json();
+                const vetsData = await vetRes.json();
 
-            setPets(petsData);
-            setVets(vetsData);
+                setPets(petsData);
+                setVets(vetsData);
+            } catch (error) {
+                console.error("Error fetching pets/vets:", error);
+            }
         };
 
         fetchData();
     }, []);
 
+    // ---------------------------
+    // Submit handler
+    // ---------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const url = isCreate
-            ? "http://127.0.0.1:8000/api/appointments/"
-            : `http://127.0.0.1:8000/api/appointments/${selectedAppointment.id}/`;
+            ? `${API_URL}/appointments/`
+            : `${API_URL}/appointments/${selectedAppointment.id}/`;
 
         const method = isCreate ? "POST" : "PUT";
 
-        await fetch(url, {
-            method,
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                ...formData,
-                date: new Date(formData.date).toISOString()
-            })
-        });
+        const payload = {
+            date: new Date(formData.date).toISOString(),
+            pet: Number(formData.pet),
+            vet: Number(formData.vet)
+        };
 
-        await refreshAppointments();
-        setModalOpen(false);
+        try {
+            await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            await refreshAppointments();
+            setModalOpen(false);
+
+        } catch (error) {
+            console.error("Error saving appointment:", error);
+        }
     };
 
+    // ---------------------------
+    // Modal style
+    // ---------------------------
     const style = {
         position: "absolute",
         top: "50%",
@@ -105,7 +132,7 @@ const AppointmentModal = ({
                     <TextField
                         select
                         label="Pet"
-                        value={formData.pet}
+                        value={Number(formData.pet)}
                         onChange={(e) =>
                             setFormData({ ...formData, pet: e.target.value })
                         }
@@ -113,7 +140,7 @@ const AppointmentModal = ({
                         sx={{ mb: 2 }}
                         required
                     >
-                        {pets.map(pet => (
+                        {pets.map((pet) => (
                             <MenuItem key={pet.id} value={pet.id}>
                                 {pet.name}
                             </MenuItem>
@@ -124,7 +151,7 @@ const AppointmentModal = ({
                     <TextField
                         select
                         label="Vet"
-                        value={formData.vet}
+                        value={Number(formData.vet)}
                         onChange={(e) =>
                             setFormData({ ...formData, vet: e.target.value })
                         }
@@ -132,7 +159,7 @@ const AppointmentModal = ({
                         sx={{ mb: 2 }}
                         required
                     >
-                        {vets.map(vet => (
+                        {vets.map((vet) => (
                             <MenuItem key={vet.id} value={vet.id}>
                                 {vet.name}
                             </MenuItem>

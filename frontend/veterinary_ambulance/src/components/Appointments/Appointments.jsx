@@ -3,18 +3,27 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import AppointmentModal from "./AppointmentModal";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Appointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState({});
 
+    // -----------------------------
+    // FETCH APPOINTMENTS
+    // -----------------------------
     const fetchAppointments = async () => {
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/appointments/");
+            const res = await fetch(`${API_URL}/appointments/`);
             const data = await res.json();
-            setAppointments(data);
+
+            console.log("Appointments API:", data);
+
+            setAppointments(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching appointments:", error);
+            setAppointments([]);
         }
     };
 
@@ -22,41 +31,64 @@ const Appointments = () => {
         fetchAppointments();
     }, []);
 
+    // -----------------------------
+    // DELETE APPOINTMENT
+    // -----------------------------
     const handleDelete = async (id) => {
         try {
-            await fetch(`http://127.0.0.1:8000/api/appointments/${id}/`, {
+            await fetch(`${API_URL}/appointments/${id}/`, {
                 method: "DELETE",
             });
+
             fetchAppointments();
         } catch (error) {
             console.error("Delete failed:", error);
         }
     };
 
+    // -----------------------------
+    // TABLE COLUMNS (SAFE VERSION)
+    // -----------------------------
     const columns = [
         { field: "id", headerName: "ID", width: 70 },
 
-        // ✅ FIXED DATE COLUMN (no Invalid Date)
+        // DATE
         {
             field: "date",
             headerName: "Date",
             width: 220,
-            renderCell: (params) => {
-                const value = params.row.date;
-
+            valueGetter: (params) => {
+                const value = params?.row?.date;
                 if (!value) return "—";
 
                 const dateObj = new Date(value);
-
-                if (isNaN(dateObj)) return "Invalid";
-
-                return dateObj.toLocaleString("en-IN");
-            }
+                return isNaN(dateObj.getTime())
+                    ? "Invalid"
+                    : dateObj.toLocaleString("en-IN");
+            },
         },
 
-        { field: "pet", headerName: "Pet ID", width: 120 },
-        { field: "vet", headerName: "Vet ID", width: 120 },
+        // PET (SAFE)
+        {
+            field: "pet",
+            headerName: "Pet",
+            width: 180,
+            valueGetter: (params) => {
+                return params?.row?.pet?.name ?? "—";
+            },
+        },
 
+        // VET (SAFE)
+        {
+            field: "vet",
+            headerName: "Vet",
+            width: 180,
+            valueGetter: (params) => {
+                return params?.row?.vet?.name ?? "—";
+            },
+        },
+
+        // ACTIONS
         {
             field: "actions",
             headerName: "Actions",
@@ -86,6 +118,9 @@ const Appointments = () => {
         },
     ];
 
+    // -----------------------------
+    // CREATE APPOINTMENT
+    // -----------------------------
     const createAppointment = () => {
         setSelectedAppointment({});
         setModalOpen(true);
@@ -103,12 +138,12 @@ const Appointments = () => {
                 Add Appointment
             </Button>
 
-            <div style={{ height: 400 }}>
+            <div style={{ height: 400, width: "100%" }}>
                 <DataGrid
                     rows={appointments}
                     columns={columns}
+                    getRowId={(row) => row.id}
                     pageSize={5}
-                    rowsPerPageOptions={[5]}
                 />
             </div>
 

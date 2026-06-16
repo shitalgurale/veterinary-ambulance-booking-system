@@ -1,51 +1,67 @@
-import { getOwners, deleteOwner } from '../../services/ownerService';
-import { useEffect, useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import OwnerModal from './OwnerModal';
-import { Button } from '@mui/material';
+import { getOwners, deleteOwner } from "../../services/ownerService";
+import { useEffect, useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import OwnerModal from "./OwnerModal";
+import { Button } from "@mui/material";
 
 const Owners = () => {
+
     const [owners, setOwners] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
-    const [selectedOwner, setSelectedOwner] = useState({});
+    const [selectedOwner, setSelectedOwner] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    // ✅ reusable fetch function
+    // -----------------------------
+    // FETCH OWNERS
+    // -----------------------------
     const fetchOwners = async () => {
+        setLoading(true);
         try {
             const data = await getOwners();
-            setOwners(data);
+            setOwners(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error(error);
+            console.error("Fetch owners error:", error);
+            setOwners([]);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // ✅ load data on page load
     useEffect(() => {
         fetchOwners();
     }, []);
 
+    // -----------------------------
+    // DELETE OWNER
+    // -----------------------------
     const handleDelete = async (ownerId) => {
         try {
             const success = await deleteOwner(ownerId);
+
             if (success) {
-                setOwners(owners.filter(owner => owner.id !== ownerId));
-                console.log("Owner deleted successfully");
-            } else {
-                console.error("Failed to delete owner");
+                setOwners((prev) =>
+                    prev.filter((owner) => owner.id !== ownerId)
+                );
             }
         } catch (error) {
-            console.error(error);
+            console.error("Delete error:", error);
         }
     };
 
+    // -----------------------------
+    // TABLE COLUMNS
+    // -----------------------------
     const columns = [
-        { field: 'id', headerName: 'ID', width: 70 },
-        { field: 'name', headerName: 'Name', width: 150 },
-        { field: 'phone', headerName: 'Phone', width: 150 },
+        { field: "id", headerName: "ID", width: 70 },
+        { field: "name", headerName: "Name", width: 150 },
+        { field: "phone", headerName: "Phone", width: 150 },
+
         {
-            field: 'actions',
-            headerName: 'Actions',
+            field: "actions",
+            headerName: "Actions",
             width: 250,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
                 <>
                     <Button
@@ -71,8 +87,11 @@ const Owners = () => {
         },
     ];
 
+    // -----------------------------
+    // CREATE OWNER
+    // -----------------------------
     const createOwner = () => {
-        setSelectedOwner({});
+        setSelectedOwner(null);
         setModalOpen(true);
     };
 
@@ -88,12 +107,13 @@ const Owners = () => {
                 Add Owner
             </Button>
 
-            <div style={{ height: 400 }}>
+            <div style={{ height: 420, width: "100%" }}>
                 <DataGrid
                     rows={owners}
                     columns={columns}
+                    getRowId={(row) => row.id}
+                    loading={loading}
                     pageSize={5}
-                    rowsPerPageOptions={[5]}
                 />
             </div>
 
@@ -101,7 +121,7 @@ const Owners = () => {
                 modalOpen={modalOpen}
                 setModalOpen={setModalOpen}
                 selectedOwner={selectedOwner}
-                refreshOwners={fetchOwners}   
+                refreshOwners={fetchOwners}
             />
         </>
     );

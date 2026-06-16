@@ -1,7 +1,14 @@
 import { Modal, Box, Typography, TextField, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 
-const VetModal = ({ modalOpen, setModalOpen, selectedVet, refreshVets }) => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const VetModal = ({
+    modalOpen,
+    setModalOpen,
+    selectedVet,
+    refreshVets
+}) => {
 
     const isCreate = !selectedVet?.id;
 
@@ -10,34 +17,71 @@ const VetModal = ({ modalOpen, setModalOpen, selectedVet, refreshVets }) => {
         specialization: ""
     });
 
+    // -----------------------------
+    // Fill form on edit
+    // -----------------------------
     useEffect(() => {
-        setFormData({
-            name: selectedVet?.name || "",
-            specialization: selectedVet?.specialization || ""
-        });
+        if (selectedVet) {
+            setFormData({
+                name: selectedVet?.name || "",
+                specialization: selectedVet?.specialization || ""
+            });
+        }
     }, [selectedVet]);
 
+    // -----------------------------
+    // Reset form on create
+    // -----------------------------
+    useEffect(() => {
+        if (modalOpen && isCreate) {
+            setFormData({
+                name: "",
+                specialization: ""
+            });
+        }
+    }, [modalOpen, isCreate]);
+
+    // -----------------------------
+    // Submit handler
+    // -----------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const url = isCreate
-            ? "http://127.0.0.1:8000/api/vets/"
-            : `http://127.0.0.1:8000/api/vets/${selectedVet.id}/`;
+            ? `${API_URL}/vets/`
+            : `${API_URL}/vets/${selectedVet.id}/`;
 
         const method = isCreate ? "POST" : "PUT";
 
-        await fetch(url, {
-            method,
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(formData)
-        });
+        const payload = {
+            name: formData.name.trim(),
+            specialization: formData.specialization.trim()
+        };
 
-        await refreshVets();
-        setModalOpen(false);
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to save vet");
+            }
+
+            await refreshVets();
+            setModalOpen(false);
+
+        } catch (error) {
+            console.error("Error saving vet:", error);
+        }
     };
 
+    // -----------------------------
+    // Modal style
+    // -----------------------------
     const style = {
         position: "absolute",
         top: "50%",
@@ -57,6 +101,7 @@ const VetModal = ({ modalOpen, setModalOpen, selectedVet, refreshVets }) => {
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
+
                     <TextField
                         label="Name"
                         value={formData.name}
@@ -72,7 +117,10 @@ const VetModal = ({ modalOpen, setModalOpen, selectedVet, refreshVets }) => {
                         label="Specialization"
                         value={formData.specialization}
                         onChange={(e) =>
-                            setFormData({ ...formData, specialization: e.target.value })
+                            setFormData({
+                                ...formData,
+                                specialization: e.target.value
+                            })
                         }
                         fullWidth
                         sx={{ mb: 2 }}
