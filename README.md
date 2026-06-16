@@ -2,6 +2,12 @@
 
 A full-stack web application designed to simplify veterinary service management by providing ambulance booking, appointment scheduling, and pet record management in one platform.
 
+## 🚀 Live Demo
+
+- **Frontend (Vercel):** https://veterinary-ambulance-booking-system.vercel.app
+- **Backend API (Render):** https://veterinary-ambulance-booking-system.onrender.com
+
+
 ## 🚀 Features
 
 - 🐶 Pet Management (CRUD)
@@ -50,40 +56,93 @@ A full-stack web application designed to simplify veterinary service management 
 - Implemented input validation and error handling for improved reliability.
 - Designed and managed the database using SQLite.
 
-## ▶️ Installation
+## 🛠️ Tech Stack
+
+### Frontend
+- React
+- Vite
+- Material UI (MUI)
+- React Router
+
+### Backend
+- Python
+- Django
+- Django REST Framework
+
+### Database
+- SQLite (Development)
+
+### Deployment
+- Vercel (Frontend)
+- Render (Backend)
+## 📂 Project Structure
+
+```
+Veterinary Ambulance Booking System/
+│
+├── backend/
+│   └── veterinary_ambulance/
+│
+└── frontend/
+    └── veterinary_ambulance/
+```
+
+---
+
+## ⚙️ Local Setup
 
 ### Clone the repository
 
 ```bash
 git clone https://github.com/shitalgurale/veterinary-ambulance-booking-system.git
-```
-
-### Navigate to the project
-
-```bash
 cd veterinary-ambulance-booking-system
 ```
 
-### Install frontend dependencies
+### Backend Setup
 
 ```bash
-npm install
-```
+cd backend/veterinary_ambulance
 
-### Start the React application
+python -m venv venv
 
-```bash
-npm start
-```
+# Windows
+venv\Scripts\activate
 
-### Start the Django backend
+pip install -r requirements.txt
 
-```bash
+python manage.py migrate
+
 python manage.py runserver
 ```
 
-## 👨‍💻 Author
+### Frontend Setup
+
+```bash
+cd frontend/veterinary_ambulance
+
+npm install
+
+npm run dev
+```
+
+---
+
+## 🔧 Environment Variables
+
+Create a `.env` file in the frontend project:
+
+```env
+VITE_API_URL=http://127.0.0.1:8000/api
+```
+
+For production, configure:
+
+```env
+VITE_API_URL=https://your-render-backend.onrender.com/api
+```
+## 👩‍💻 Author
 
 **Shital Gurale**
 
-GitHub: https://github.com/shitalgurale
+- GitHub: https://github.com/shitalgurale
+- LinkedIn: https://www.linkedin.com/in/shital-gurale-7a8b00407/
