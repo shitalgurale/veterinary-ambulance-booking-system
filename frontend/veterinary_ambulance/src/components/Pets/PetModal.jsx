@@ -29,16 +29,14 @@ const PetModal = ({
 
     const [owners, setOwners] = useState([]);
 
-    // -----------------------------
-    // LOAD FORM ON EDIT
-    // -----------------------------
+    // Load form when editing
     useEffect(() => {
         if (selectedPet) {
             setFormData({
-                name: selectedPet?.name || "",
-                species: selectedPet?.species || "",
-                age: selectedPet?.age || "",
-                owner: selectedPet?.owner?.id || selectedPet?.owner || ""
+                name: selectedPet.name || "",
+                species: selectedPet.species || "",
+                age: selectedPet.age || "",
+                owner: selectedPet.owner?.id || ""
             });
         } else {
             setFormData({
@@ -50,26 +48,22 @@ const PetModal = ({
         }
     }, [selectedPet]);
 
-    // -----------------------------
-    // FETCH OWNERS
-    // -----------------------------
+    // Fetch owners
     useEffect(() => {
         const fetchOwners = async () => {
             try {
                 const res = await fetch(`${API_URL}/owners/`);
                 const data = await res.json();
                 setOwners(Array.isArray(data) ? data : []);
-            } catch (error) {
-                console.error("Error fetching owners:", error);
+            } catch (err) {
+                console.error(err);
             }
         };
 
         fetchOwners();
     }, []);
 
-    // -----------------------------
-    // SUBMIT
-    // -----------------------------
+    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -79,11 +73,12 @@ const PetModal = ({
 
         const method = isEdit ? "PUT" : "POST";
 
+        // IMPORTANT: serializer expects owner_id
         const payload = {
             name: formData.name,
             species: formData.species,
             age: Number(formData.age),
-            owner: Number(formData.owner)
+            owner_id: Number(formData.owner)
         };
 
         try {
@@ -95,31 +90,35 @@ const PetModal = ({
                 body: JSON.stringify(payload)
             });
 
+            const responseData = await res.json();
+
             if (!res.ok) {
+                console.error(responseData);
                 throw new Error("Failed to save pet");
             }
 
             await refreshPets();
             setModalOpen(false);
 
-        } catch (error) {
-            console.error("Error saving pet:", error);
+        } catch (err) {
+            console.error("Error saving pet:", err);
         }
     };
 
     return (
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-            <Box sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                bgcolor: "white",
-                width: 320,
-                p: 3,
-                borderRadius: 2
-            }}>
-
+            <Box
+                sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    bgcolor: "white",
+                    p: 3,
+                    width: 350,
+                    borderRadius: 2
+                }}
+            >
                 <Typography variant="h6" mb={2}>
                     {isEdit ? "Edit Pet" : "Add Pet"}
                 </Typography>
@@ -127,59 +126,58 @@ const PetModal = ({
                 <form onSubmit={handleSubmit}>
 
                     <TextField
+                        fullWidth
                         label="Name"
                         value={formData.name}
                         onChange={(e) =>
                             setFormData({ ...formData, name: e.target.value })
                         }
-                        fullWidth
                         sx={{ mb: 2 }}
-                        required
                     />
 
                     <TextField
+                        fullWidth
                         label="Species"
                         value={formData.species}
                         onChange={(e) =>
                             setFormData({ ...formData, species: e.target.value })
                         }
-                        fullWidth
                         sx={{ mb: 2 }}
-                        required
                     />
 
                     <TextField
-                        label="Age"
+                        fullWidth
                         type="number"
+                        label="Age"
                         value={formData.age}
                         onChange={(e) =>
                             setFormData({ ...formData, age: e.target.value })
                         }
-                        fullWidth
                         sx={{ mb: 2 }}
-                        required
                     />
 
-                    {/* OWNER DROPDOWN */}
                     <TextField
                         select
+                        fullWidth
                         label="Owner"
                         value={formData.owner}
                         onChange={(e) =>
                             setFormData({ ...formData, owner: e.target.value })
                         }
-                        fullWidth
                         sx={{ mb: 2 }}
-                        required
                     >
-                        {owners.map((o) => (
-                            <MenuItem key={o.id} value={o.id}>
-                                {o.name}
+                        {owners.map((owner) => (
+                            <MenuItem key={owner.id} value={owner.id}>
+                                {owner.name}
                             </MenuItem>
                         ))}
                     </TextField>
 
-                    <Button type="submit" variant="contained" fullWidth>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        fullWidth
+                    >
                         {isEdit ? "Update" : "Create"}
                     </Button>
 
